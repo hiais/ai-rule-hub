@@ -2,17 +2,17 @@
 
 基于 `draft.md` 的系统设计，本文定义模块职责、数据模型、目录结构与关键流程，作为持续开发的架构参考。
 
-## 1. 总览
+## 1. 总览（极简版）
 
 AI Rule Hub 是一个 VS
-Code 扩展，用于统一管理 AI 编程规则与提示词，支持跨项目共享。核心由以下模块构成：
+Code 扩展，用于统一管理 AI 编程规则与提示词，支持跨项目共享。侧边栏以“分类文件夹 + 文件名”的纯文本列表展示内容；不使用图标映射或复杂 UI。核心由以下模块构成：
 
 - StorageManager：统一存储与文件系统操作
-- ConfigManager：扩展配置加载与校验
-- MetadataManager：文件元数据维护与使用记录
+- ConfigManager：扩展配置加载与保存（校验可后续引入）
+- MetadataManager：文件元数据维护与使用记录（轻量字段，不计算哈希）
 - FileOperations：面向编辑器的文件操作封装
-- ContentLibraryProvider：侧边栏树数据提供与刷新
-- Commands：命令注册与行为绑定
+- ContentLibraryProvider：侧边栏树数据提供与手动刷新
+- Commands：命令注册与行为绑定（设置库路径、打开/插入/新建/删除/重命名、搜索、刷新）
 
 ## 2. 模块职责
 
@@ -40,16 +40,16 @@ Code 扩展，用于统一管理 AI 编程规则与提示词，支持跨项目�
 
 ### ContentLibraryProvider
 
-- 实现 `TreeDataProvider`：构建分类与文件树节点。
-- 监听配置与存储变化，支持 `refresh()` 主动刷新视图。
-- 提供上下文菜单命令与图标映射。
+- 实现 `TreeDataProvider`：构建分类与文件树节点（纯文本）。
+- 通过命令触发 `refresh()` 主动刷新视图；不进行文件系统自动监听。
+- 提供基础上下文菜单命令；不做图标映射与计数装饰以外的复杂 UI。
 
 ### Commands
 
 - 命令 ID 与功能：
   - `aiRuleHub.openFile`、`aiRuleHub.insertFile`、`aiRuleHub.createFile`、`aiRuleHub.deleteFile`、`aiRuleHub.renameFile`
-  - `aiRuleHub.setStoragePath`、`aiRuleHub.refreshLibrary`、`aiRuleHub.searchFiles`、`aiRuleHub.focusView`
-- 在 `extension.ts` 激活中统一注册，解耦具体实现与 UI。
+  - `aiRuleHub.setStoragePath`（选择并保存库路径，重建结构与视图）、`aiRuleHub.refreshLibrary`（手动刷新）、`aiRuleHub.searchFiles`（前端过滤）、`aiRuleHub.focusView`
+- 在 `extension.ts` 激活中统一注册，保持实现与 UI 解耦；刷新采用“操作内刷新 + 手动刷新命令”。
 
 ## 3. 数据模型
 
@@ -129,14 +129,14 @@ extension/
 ### 搜索过滤流程
 
 ```
-用户输入关键字 → 前端实时过滤分类与文件名（不读内容） → 显示结果 → 选择操作
+用户输入关键字 → 按类别路径与文件名过滤（不读内容） → 显示结果 → 选择操作
 ```
 
-## 6. 错误处理与反馈
+## 6. 错误处理与反馈（极简版）
 
-- 统一错误出口：`showErrorMessage`；成功提示用 `showInformationMessage`。
-- 进度展示：`withProgress` 包裹耗时操作，避免 UI 卡顿。
-- 元数据损坏：自动重建 + 保留用户文件数据；记录日志并提示。
+- 使用 `showInformationMessage` / `showErrorMessage` 提供直观提示；耗时操作可选用 `withProgress`。
+- 元数据损坏：自动重建并保留用户文件数据。
+- 不进行自动监听与复杂反馈流，保持交互直观与简单。
 
 ## 7. 性能与资源
 
@@ -158,6 +158,7 @@ extension/
 
 ## 10. 可扩展性
 
-- 新分类与文件类型：扩展 `HubConfig` 的 `categories` 映射与 UI 图标。
-- 插件间协作：后续可提供 API 暴露存储与查询功能。
-- 团队数据：未来引入同步/备份/协作功能时，保持与本架构解耦。
+- 目录迁移为后续可选命令：默认不迁移；迁移时仅复制 `categories/*` 与
+  `metadata/file-meta.json`，冲突策略通过一次性确认选择。
+- 新分类与文件类型：扩展 `HubConfig` 的 `categories` 映射即可；不做图标扩展。
+- 团队数据与备份：后续引入时保持与核心架构解耦。

@@ -13,6 +13,7 @@
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
+    "onView:aiRuleHub.search",
     "onView:aiRuleHub.view",
     "onCommand:aiRuleHub.openFile",
     "onCommand:aiRuleHub.insertFile",
@@ -32,18 +33,30 @@
     "views": {
       "aiRuleHub": [
         {
+          "id": "aiRuleHub.search",
+          "name": "搜索",
+          "type": "webview"
+        },
+        {
           "id": "aiRuleHub.view",
-          "name": "AI Rule Hub"
+          "name": "文件库"
         }
       ]
     },
     "menus": {
-      "view/item/context": [
+      "view/title": [
         {
-          "command": "aiRuleHub.openFile",
-          "when": "view == aiRuleHub.view && viewItem == file",
+          "command": "aiRuleHub.createFile",
+          "when": "view == aiRuleHub.view",
           "group": "navigation"
         },
+        {
+          "command": "aiRuleHub.setSort",
+          "when": "view == aiRuleHub.view",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
         {
           "command": "aiRuleHub.insertFile",
           "when": "view == aiRuleHub.view && viewItem == file",
@@ -56,36 +69,30 @@
         },
         {
           "command": "aiRuleHub.renameFile",
-          "when": "view == aiRuleHub.view && viewItem == file",
-          "group": "inline"
+          "when": "view == aiRuleHub.view && viewItem == file"
         },
         {
           "command": "aiRuleHub.deleteFile",
-          "when": "view == aiRuleHub.view && viewItem == file",
-          "group": "inline"
+          "when": "view == aiRuleHub.view && viewItem == file"
         }
       ]
     },
     "commands": [
       {
-        "command": "aiRuleHub.openFile",
-        "title": "打开文件进行编辑"
-      },
-      {
         "command": "aiRuleHub.insertFile",
-        "title": "插入文件内容到光标位置"
+        "title": "插入光标处"
       },
       {
         "command": "aiRuleHub.createFile",
-        "title": "创建新文件"
+        "title": "新建"
       },
       {
         "command": "aiRuleHub.deleteFile",
-        "title": "删除文件"
+        "title": "删除"
       },
       {
         "command": "aiRuleHub.renameFile",
-        "title": "重命名文件"
+        "title": "重命名"
       },
       {
         "command": "aiRuleHub.setStoragePath",
@@ -96,8 +103,8 @@
         "title": "刷新文件库"
       },
       {
-        "command": "aiRuleHub.searchFiles",
-        "title": "搜索文件"
+        "command": "aiRuleHub.setSort",
+        "title": "排序"
       },
       {
         "command": "aiRuleHub.focusView",

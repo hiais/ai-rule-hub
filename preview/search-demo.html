@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Rule Hub 搜索+分段 预览</title>
+    <style>
+      body {
+        font-family:
+          -apple-system,
+          Segoe UI,
+          Helvetica,
+          Arial,
+          sans-serif;
+        margin: 0;
+        padding: 12px;
+        background: #1e1e1e;
+        color: #ddd;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 12px;
+        background: #252526;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+      }
+
+      input {
+        flex: 1;
+        padding: 6px 8px;
+        border: 1px solid #3c3c3c;
+        background: #1e1e1e;
+        color: #ddd;
+        border-radius: 4px;
+      }
+
+      button {
+        padding: 4px 8px;
+        border: 1px solid #3c3c3c;
+        background: #0e639c;
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .segments {
+        display: grid;
+        gap: 6px;
+        margin-top: 8px;
+        grid-auto-rows: min-content;
+      }
+
+      .seg {
+        white-space: nowrap;
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid #3c3c3c;
+        background: #2d2d30;
+        color: #ddd;
+        cursor: pointer;
+        text-align: center;
+      }
+
+      .seg.active {
+        background: #0e639c;
+        color: #fff;
+      }
+
+      .list {
+        margin-top: 10px;
+        padding: 8px;
+        background: #1e1e1e;
+        border: 1px solid #333;
+        border-radius: 6px;
+      }
+
+      .item {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 6px;
+        border-bottom: 1px solid #2a2a2a;
+      }
+
+      .cat {
+        color: #909090;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="row">
+        <input id="q" type="text" placeholder="输入关键词或过滤：type:rule status:draft tag:mcp" />
+      </div>
+      <div class="segments" id="segments"></div>
+      <div class="list" id="list"></div>
+    </div>
+    <script>
+      const q = document.getElementById('q');
+      const segs = document.getElementById('segments');
+      const listEl = document.getElementById('list');
+
+      const categories = ['全部', 'rules', 'prompts', 'mcp', 'agent', 'workflows'];
+      let active = '全部';
+
+      function applyGridColumns() {
+        const width = segs.offsetWidth || 320;
+        const minButton = 80;
+        let cols = Math.max(3, Math.min(categories.length, Math.floor(width / minButton)));
+        segs.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+      }
+
+      function calcCounts() {
+        const qval = (q.value || '').toLowerCase();
+        const counts = { rules: 0, prompts: 0, mcp: 0, agent: 0, workflows: 0 };
+        sample.forEach((it) => {
+          const key = (it.cat + '/' + it.name).toLowerCase();
+          const passQ = !qval || key.includes(qval);
+          if (passQ && counts.hasOwnProperty(it.cat)) counts[it.cat]++;
+        });
+        return counts;
+      }
+
+      function renderSegments() {
+        segs.innerHTML = '';
+        const counts = calcCounts();
+        categories.forEach((cat) => {
+          const el = document.createElement('button');
+          el.className = 'seg' + (active === cat ? ' active' : '');
+          const cnt =
+            cat === '全部' ? Object.values(counts).reduce((s, v) => s + v, 0) : (counts[cat] ?? 0);
+          el.textContent = cat + ' (' + cnt + ')';
+          el.onclick = () => {
+            active = cat;
+            renderSegments();
+            renderMock();
+          };
+          segs.appendChild(el);
+        });
+        applyGridColumns();
+      }
+
+      // 示例数据：扁平文件 + 分类标签 + 最近更新时间 + 使用次数
+      const now = Date.now();
+      const sample = [
+        { name: 'test.rule', cat: 'rules', mtime: now - 1000 * 60 * 5, usedCount: 12 },
+        { name: 'ff.rule.md', cat: 'rules', mtime: now - 1000 * 60 * 60, usedCount: 3 },
+        { name: 'promptA.md', cat: 'prompts', mtime: now - 1000 * 60 * 60 * 24, usedCount: 20 },
+        { name: 'workflow1.yaml', cat: 'workflows', mtime: now - 1000 * 60 * 2, usedCount: 1 },
+        { name: 'agentX.json', cat: 'agent', mtime: now - 1000 * 60 * 60 * 2, usedCount: 7 },
+        { name: 'mcp-config.toml', cat: 'mcp', mtime: now - 1000 * 30, usedCount: 9 },
+      ];
+
+      function renderList(sort = 'name-asc') {
+        listEl.innerHTML = '';
+        const qval = (q.value || '').toLowerCase();
+        const data = sample
+          .filter((it) => {
+            const key = (it.cat + '/' + it.name).toLowerCase();
+            const passCat = active === '全部' || it.cat === active;
+            const passQ = !qval || key.includes(qval);
+            return passCat && passQ;
+          })
+          .sort((a, b) => {
+            if (sort === 'name-asc') return a.name.localeCompare(b.name);
+            if (sort === 'name-desc') return b.name.localeCompare(a.name);
+            if (sort === 'mtime-desc') return b.mtime - a.mtime;
+            if (sort === 'mtime-asc') return a.mtime - b.mtime;
+            if (sort === 'usage-desc') return (b.usedCount || 0) - (a.usedCount || 0);
+            if (sort === 'usage-asc') return (a.usedCount || 0) - (b.usedCount || 0);
+            // cat-name
+            if (a.cat !== b.cat) return a.cat.localeCompare(b.cat);
+            return a.name.localeCompare(b.name);
+          });
+        data.forEach((it) => {
+          const row = document.createElement('div');
+          row.className = 'item';
+          const right = active === '全部' ? '<span class="cat">' + it.cat + '</span>' : '';
+          row.innerHTML = '<span>' + it.name + '</span>' + right;
+          listEl.appendChild(row);
+        });
+      }
+
+      renderSegments();
+      renderList();
+      window.addEventListener('resize', applyGridColumns);
+
+      q.addEventListener('input', (e) => {
+        // 纯预览：不做实际过滤逻辑，仅展示输入值
+        const val = e.target.value || '';
+        q.title = val ? `过滤：${val}` : '';
+        if (!val) {
+          // 输入框清空时，重置分类
+          active = '全部';
+          renderSegments();
+        }
+        renderList();
+      });
+
+      // 点击分段时也刷新示例列表
+      const oldRenderSegments = renderSegments;
+      renderSegments = function () {
+        oldRenderSegments();
+        renderList(window.sortMode || 'name-asc');
+      };
+
+      // 简易排序按钮：贴合窄侧栏做法，统一放标题栏
+      const bar = document.createElement('div');
+      bar.className = 'row';
+      bar.style.marginTop = '8px';
+      const sortBtn = document.createElement('button');
+      sortBtn.textContent = '排序';
+      sortBtn.onclick = async () => {
+        const options = [
+          { k: 'name-asc', label: '按名称升序' },
+          { k: 'name-desc', label: '按名称降序' },
+          { k: 'cat-name', label: '按分类后名称' },
+          { k: 'mtime-desc', label: '按更新时间 新→旧' },
+          { k: 'mtime-asc', label: '按更新时间 旧→新' },
+          { k: 'usage-desc', label: '按使用频次 高→低' },
+          { k: 'usage-asc', label: '按使用频次 低→高' },
+        ];
+        const idx = await new Promise((resolve) => {
+          // 简化：prompt 选择
+          const txt = options.map((o, i) => `${i + 1}. ${o.label}`).join('\n');
+          const inp = prompt('选择排序方式:\n' + txt + '\n输入数字(1-7)：', '1');
+          resolve(Number(inp || '1') - 1);
+        });
+        const chosen = options[Math.max(0, Math.min(options.length - 1, idx))];
+        window.sortMode = chosen.k;
+        sortBtn.title = chosen.label;
+        renderList(window.sortMode);
+        renderSegments();
+      };
+      bar.appendChild(sortBtn);
+      document.querySelector('.container').insertBefore(bar, document.getElementById('segments'));
+    </script>
+  </body>
+</html>

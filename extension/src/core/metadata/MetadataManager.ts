@@ -30,9 +30,11 @@ export class MetadataManager {
     const now = Date.now();
     const idx = meta.files.findIndex((f) => f.path === filePath);
     if (idx >= 0) {
+      // 保留既有字段（如 usedCount、lastUsedAt），仅更新尺寸与更新时间
       meta.files[idx] = { ...meta.files[idx], size, updatedAt: now };
     } else {
-      meta.files.push({ path: filePath, size, createdAt: now, updatedAt: now });
+      // 新建记录时初始化使用次数为 0
+      meta.files.push({ path: filePath, size, createdAt: now, updatedAt: now, usedCount: 0 });
     }
     await this.saveMetadata(meta);
   }
@@ -42,10 +44,18 @@ export class MetadataManager {
     const now = Date.now();
     const idx = meta.files.findIndex((f) => f.path === filePath);
     if (idx >= 0) {
-      meta.files[idx] = { ...meta.files[idx], lastUsedAt: now };
+      const prev = meta.files[idx]?.usedCount ?? 0;
+      meta.files[idx] = { ...meta.files[idx], lastUsedAt: now, usedCount: prev + 1 };
     } else {
       // 如果不存在，创建基础记录
-      meta.files.push({ path: filePath, size: 0, createdAt: now, updatedAt: now, lastUsedAt: now });
+      meta.files.push({
+        path: filePath,
+        size: 0,
+        createdAt: now,
+        updatedAt: now,
+        lastUsedAt: now,
+        usedCount: 1,
+      });
     }
     await this.saveMetadata(meta);
   }

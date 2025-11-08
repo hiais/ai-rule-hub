@@ -25,22 +25,60 @@ export class StorageManager {
     return path.join(this.basePath, 'categories', category, filename);
   }
 
+  private legacyAlias(category: string): string | undefined {
+    const map: Record<string, string> = {
+      rule: 'rules',
+      prompt: 'prompts',
+      workflow: 'workflows',
+    };
+    return map[category];
+  }
+
+  private async pathExists(p: string): Promise<boolean> {
+    try {
+      await fs.stat(p);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async resolveFilePathFlexible(category: string, filename: string): Promise<string> {
+    const primary = this.resolveFilePath(category, filename);
+    if (await this.pathExists(primary)) return primary;
+    const legacy = this.legacyAlias(category);
+    if (legacy) {
+      const alt = path.join(this.basePath, 'categories', legacy, filename);
+      if (await this.pathExists(alt)) return alt;
+    }
+    return primary;
+  }
+
   isAIRuleHubFile(filePath: string): boolean {
     return path.normalize(filePath).startsWith(path.normalize(this.basePath));
   }
 
   async listFiles(category: string): Promise<string[]> {
-    const dir = path.join(this.basePath, 'categories', category);
-    try {
-      const entries = await fs.readdir(dir, { withFileTypes: true });
-      const exts = this.config.categories[category]?.fileExtensions ?? [];
-      return entries
-        .filter((e) => e.isFile())
-        .map((e) => e.name)
-        .filter((name) => exts.length === 0 || exts.some((ext) => name.endsWith(ext)));
-    } catch {
-      return [];
-    }
+    const exts = this.config.categories[category]?.fileExtensions ?? [];
+    const readDir = async (dir: string): Promise<string[]> => {
+      try {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        return entries
+          .filter((e) => e.isFile())
+          .map((e) => e.name)
+          .filter((name) => exts.length === 0 || exts.some((ext) => name.endsWith(ext)));
+      } catch {
+        return [];
+      }
+    };
+    const primary = path.join(this.basePath, 'categories', category);
+    const legacy = this.legacyAlias(category)
+      ? path.join(this.basePath, 'categories', this.legacyAlias(category)!)
+      : undefined;
+    const a = await readDir(primary);
+    const b = legacy ? await readDir(legacy) : [];
+    // 去重合并
+    return Array.from(new Set([...a, ...b]));
   }
 
   getAllowedExtensions(category: string): string[] {
@@ -54,12 +92,12 @@ export class StorageManager {
   }
 
   async deleteFile(category: string, filename: string): Promise<void> {
-    const filePath = this.resolveFilePath(category, filename);
+    const filePath = await this.resolveFilePathFlexible(category, filename);
     await fs.unlink(filePath);
   }
 
   async renameFile(category: string, oldName: string, newName: string): Promise<string> {
-    const oldPath = this.resolveFilePath(category, oldName);
+    const oldPath = await this.resolveFilePathFlexible(category, oldName);
     const newPath = this.resolveFilePath(category, newName);
     await fs.rename(oldPath, newPath);
     return newPath;

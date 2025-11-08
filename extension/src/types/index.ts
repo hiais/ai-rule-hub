@@ -20,6 +20,7 @@ export type FileMetadata = {
   size: number;
   hash?: string;
   lastUsedAt?: number;
+  usedCount?: number;
   createdAt?: number;
   updatedAt?: number;
 };
