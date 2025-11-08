@@ -1,0 +1,122 @@
+{
+  "name": "ai-rule-hub",
+  "displayName": "AI Rule Hub",
+  "description": "统一管理 AI 编程规则与提示词的 VS Code 扩展（MVP 骨架）",
+  "version": "0.1.0",
+  "publisher": "local",
+  "private": true,
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onView:aiRuleHub.view",
+    "onCommand:aiRuleHub.openFile",
+    "onCommand:aiRuleHub.insertFile",
+    "onCommand:aiRuleHub.createFile",
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aiRuleHub",
+          "title": "AI Rule Hub",
+          "icon": "resources/hub.svg"
+        }
+      ]
+    },
+    "views": {
+      "aiRuleHub": [
+        {
+          "id": "aiRuleHub.view",
+          "name": "AI Rule Hub"
+        }
+      ]
+    },
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "aiRuleHub.openFile",
+          "when": "view == aiRuleHub.view && viewItem == file",
+          "group": "navigation"
+        },
+        {
+          "command": "aiRuleHub.insertFile",
+          "when": "view == aiRuleHub.view && viewItem == file",
+          "group": "inline"
+        },
+        {
+          "command": "aiRuleHub.createFile",
+          "when": "view == aiRuleHub.view && viewItem == category",
+          "group": "inline"
+        },
+        {
+          "command": "aiRuleHub.renameFile",
+          "when": "view == aiRuleHub.view && viewItem == file",
+          "group": "inline"
+        },
+        {
+          "command": "aiRuleHub.deleteFile",
+          "when": "view == aiRuleHub.view && viewItem == file",
+          "group": "inline"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "aiRuleHub.openFile",
+        "title": "打开文件进行编辑"
+      },
+      {
+        "command": "aiRuleHub.insertFile",
+        "title": "插入文件内容到光标位置"
+      },
+      {
+        "command": "aiRuleHub.createFile",
+        "title": "创建新文件"
+      },
+      {
+        "command": "aiRuleHub.deleteFile",
+        "title": "删除文件"
+      },
+      {
+        "command": "aiRuleHub.renameFile",
+        "title": "重命名文件"
+      },
+      {
+        "command": "aiRuleHub.setStoragePath",
+        "title": "设置存储路径"
+      },
+      {
+        "command": "aiRuleHub.refreshLibrary",
+        "title": "刷新文件库"
+      },
+      {
+        "command": "aiRuleHub.searchFiles",
+        "title": "搜索文件"
+      },
+      {
+        "command": "aiRuleHub.focusView",
+        "title": "聚焦到 AI Rule Hub 视图"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write .",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/vscode": "^1.85.0",
+    "tslib": "^2.6.2",
+    "typescript": "^5.6.2",
+    "vsce": "^2.14.0"
+  }
+}

@@ -36,10 +36,10 @@
 ~/.ai-rule-hub/                    # 根目录 (可配置)
 ├── hub-config.json               # 插件配置文件
 ├── categories/                   # 分类目录
-│   ├── cursor-rules/            # Cursor规则
+│   ├── rules/                   # 规则
 │   ├── prompts/                 # 提示词
-│   ├── mcp-configs/             # MCP配置
-│   ├── agent-descriptions/      # 智能体描述
+│   ├── mcp/                     # MCP配置
+│   ├── agent/                   # 智能体描述
 │   └── workflows/               # 工作流程
 └── metadata/                     # 元数据
     └── file-meta.json           # 文件元数据
@@ -47,13 +47,13 @@
 
 ### 支持的文件类型
 
-| 分类       | 文件后缀                  | 说明                       |
-| ---------- | ------------------------- | -------------------------- |
-| Cursor规则 | `.cursorrule`, `.rule.md` | Cursor AI规则文件          |
-| 提示词     | `.prompt.md`, `.prompt`   | AI提示词模板               |
-| MCP配置    | `.mcp.json`               | Model Context Protocol配置 |
-| 智能体描述 | `.agent.md`               | AI智能体角色描述           |
-| 工作流程   | `.workflow.md`            | 开发工作流程文档           |
+| 分类       | 文件后缀                | 说明                       |
+| ---------- | ----------------------- | -------------------------- |
+| 规则       | `.rule`, `.rule.md`     | 通用规则文件               |
+| 提示词     | `.prompt.md`, `.prompt` | AI提示词模板               |
+| MCP配置    | `.mcp.json`             | Model Context Protocol配置 |
+| 智能体描述 | `.agent.md`             | AI智能体角色描述           |
+| 工作流程   | `.workflow.md`          | 开发工作流程文档           |
 
 ---
 
@@ -65,10 +65,10 @@
 AI Rule Hub
 ├── ⚙️ 设置库路径
 ├── 🔍 [搜索文件...]
-├── 📁 cursor-rules (3)
+├── 📁 rules (3)
 ├── 📁 prompts (12)
-├── 📁 mcp-configs (2)
-├── 📁 agent-descriptions (5)
+├── 📁 mcp (2)
+├── 📁 agent (5)
 └── 📁 workflows (3)
 ```
 
@@ -83,7 +83,7 @@ AI Rule Hub
 
 - 📁 文件夹
 - 📄 普通文件
-- 🛜 Cursor规则文件
+- 🛜 规则文件
 - 💬 提示词文件
 - ⚙️ MCP配置文件
 - 🤖 智能体描述文件
@@ -215,9 +215,9 @@ class MetadataManager {
   "version": "1.0.0",
   "storagePath": "/Users/username/.ai-rule-hub",
   "categories": {
-    "cursor-rules": {
+    "rules": {
       "enabled": true,
-      "fileExtensions": [".cursorrule", ".rule.md"]
+      "fileExtensions": [".rule", ".rule.md"]
     },
     "prompts": {
       "enabled": true,
@@ -332,7 +332,7 @@ const COMMANDS = {
 ```
 搜索: [api]                ← 用户输入
 
-📄 api-design.cursorrule
+📄 api-design.rule
 📄 openapi-generation.prompt.md
 📄 restful-api.workflow.md
 ```
