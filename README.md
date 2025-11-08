@@ -26,4 +26,3 @@ AI Rule Hub 旨在统一管理 AI 编程规则与提示词（Cursor 规则、Pro
 ## 参考
 
 - 设计文档: `draft.md`
-

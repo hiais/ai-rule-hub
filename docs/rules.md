@@ -142,4 +142,3 @@ Scope 建议：`storage`、`config`、`metadata`、`files`、`ui`、`commands`�
 —
 
 以上规则在 MVP 范围内稳定执行，后续扩展功能需在不破坏现有体验的前提下逐步引入。
-
