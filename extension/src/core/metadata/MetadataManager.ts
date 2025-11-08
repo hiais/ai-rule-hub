@@ -15,8 +15,15 @@ export class MetadataManager {
   }
 
   async loadMetadata(): Promise<{ files: FileMetadata[] }> {
-    const buf = await fs.readFile(this.metaFile, 'utf8');
-    return JSON.parse(buf);
+    try {
+      const buf = await fs.readFile(this.metaFile, 'utf8');
+      return JSON.parse(buf);
+    } catch (e) {
+      // 文件损坏或读取失败时自动重建为空结构，避免整个功能不可用
+      const empty = { files: [] as FileMetadata[] };
+      await fs.writeFile(this.metaFile, JSON.stringify(empty, null, 2), 'utf8').catch(() => {});
+      return empty;
+    }
   }
 
   async saveMetadata(metadata: { files: FileMetadata[] }): Promise<void> {

@@ -3,8 +3,13 @@
   "displayName": "AI Rule Hub",
   "description": "统一管理 AI 编程规则与提示词的 VS Code 扩展（MVP 骨架）",
   "version": "0.1.0",
-  "publisher": "local",
+  "publisher": "hiai",
+  "icon": "resources/icon-128.png",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hiai/rule-kit.git"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -117,11 +122,13 @@
     "watch": "tsc -w -p ./",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write .",
-    "package": "vsce package"
+    "package": "vsce package",
+    "gen:icon": "node scripts/generate-icon.cjs resources/source.png resources/icon"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
     "@types/vscode": "^1.85.0",
+    "jimp": "^0.22.10",
     "tslib": "^2.6.2",
     "typescript": "^5.6.2",
     "vsce": "^2.14.0"

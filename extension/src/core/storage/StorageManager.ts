@@ -55,7 +55,12 @@ export class StorageManager {
   }
 
   isAIRuleHubFile(filePath: string): boolean {
-    return path.normalize(filePath).startsWith(path.normalize(this.basePath));
+    // 更稳健的包含校验：使用 resolve + relative，避免同前缀路径误判（如 C:\hub 与 C:\hub-old）
+    const base = path.resolve(this.basePath);
+    const target = path.resolve(filePath);
+    const rel = path.relative(base, target);
+    // 注意：TS 中 `rel && ...` 会产生 `string | boolean`，需显式判断非空
+    return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
   }
 
   async listFiles(category: string): Promise<string[]> {
@@ -72,9 +77,8 @@ export class StorageManager {
       }
     };
     const primary = path.join(this.basePath, 'categories', category);
-    const legacy = this.legacyAlias(category)
-      ? path.join(this.basePath, 'categories', this.legacyAlias(category)!)
-      : undefined;
+    const alias = this.legacyAlias(category);
+    const legacy = alias ? path.join(this.basePath, 'categories', alias) : undefined;
     const a = await readDir(primary);
     const b = legacy ? await readDir(legacy) : [];
     // 去重合并

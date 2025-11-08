@@ -179,7 +179,11 @@ export function registerCommands(
       try {
         const [category, filename] = node.id.split('/');
         await storage.deleteFile(category, filename);
-        await metadata.removeFileMetadata(node.path!);
+        if (!node.path) {
+          vscode.window.showErrorMessage('无法确定文件路径，删除元数据失败');
+        } else {
+          await metadata.removeFileMetadata(node.path);
+        }
         vscode.window.showInformationMessage(`已删除 ${node.label}`);
         provider.refresh();
       } catch (e: any) {
@@ -203,7 +207,11 @@ export function registerCommands(
       if (!name || name === filename) return;
       try {
         const newPath = await storage.renameFile(category, filename, name);
-        await metadata.renameFileMetadata(node.path!, newPath);
+        if (!node.path) {
+          vscode.window.showErrorMessage('无法确定文件路径，更新元数据失败');
+        } else {
+          await metadata.renameFileMetadata(node.path, newPath);
+        }
         vscode.window.showInformationMessage(`已重命名为 ${name}`);
         provider.refresh();
       } catch (e: any) {
@@ -244,10 +252,10 @@ export function registerCommands(
       const query = await vscode.window.showInputBox({
         prompt: '输入搜索关键字（按文件名/类别路径匹配）',
       });
-      (provider as any).setFilter?.(query);
+      provider.setFilter?.(query ?? '');
     }),
     vscode.commands.registerCommand('aiRuleHub.clearSearch', async () => {
-      (provider as any).setFilter?.('');
+      provider.setFilter?.('');
       vscode.window.showInformationMessage('已清空搜索过滤');
     }),
     vscode.commands.registerCommand('aiRuleHub.focusView', async () => {
