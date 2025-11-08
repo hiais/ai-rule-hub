@@ -2,12 +2,10 @@
 
 ## 📋 文档概述
 
-**项目名称**: AI Rule Hub
-**版本**: v1.0 MVP
-**设计理念**: 极简、实用、零学习成本
+**项目名称**: AI Rule Hub **版本**: v1.0 MVP **设计理念**: 极简、实用、零学习成本
 **核心价值**: 统一管理AI编程规则和提示词，跨项目共享使用
 
-______________________________________________________________________
+---
 
 ## 🎯 产品愿景
 
@@ -28,7 +26,7 @@ ______________________________________________________________________
 - 团队技术负责人：需要统一团队的AI编程标准
 - DevOps工程师：管理公司级的AI开发规范
 
-______________________________________________________________________
+---
 
 ## 📁 系统架构
 
@@ -57,7 +55,7 @@ ______________________________________________________________________
 | 智能体描述 | `.agent.md`               | AI智能体角色描述           |
 | 工作流程   | `.workflow.md`            | 开发工作流程文档           |
 
-______________________________________________________________________
+---
 
 ## 🎨 用户界面设计
 
@@ -91,7 +89,7 @@ AI Rule Hub
 - 🤖 智能体描述文件
 - 📋 工作流程文件
 
-______________________________________________________________________
+---
 
 ## 🔄 核心功能流程
 
@@ -119,7 +117,7 @@ ______________________________________________________________________
 用户在搜索框输入 → 实时过滤文件列表 → 显示匹配结果 → 用户选择操作
 ```
 
-______________________________________________________________________
+---
 
 ## 🛠️ 技术实现方案
 
@@ -132,20 +130,20 @@ class StorageManager {
   private basePath: string;
 
   // 初始化存储系统
-  async initialize(storagePath?: string): Promise<void>
+  async initialize(storagePath?: string): Promise<void>;
 
   // 确保目录结构
-  private async ensureDirectoryStructure(): Promise<void>
+  private async ensureDirectoryStructure(): Promise<void>;
 
   // 文件操作
-  async saveFile(category: string, filename: string, content: string): Promise<string>
-  async readFile(category: string, filename: string): Promise<string>
-  async deleteFile(category: string, filename: string): Promise<void>
-  async listFiles(category: string): Promise<string[]>
+  async saveFile(category: string, filename: string, content: string): Promise<string>;
+  async readFile(category: string, filename: string): Promise<string>;
+  async deleteFile(category: string, filename: string): Promise<void>;
+  async listFiles(category: string): Promise<string[]>;
 
   // 路径解析
-  resolveFilePath(category: string, filename: string): string
-  isAIRuleHubFile(filePath: string): boolean
+  resolveFilePath(category: string, filename: string): string;
+  isAIRuleHubFile(filePath: string): boolean;
 }
 ```
 
@@ -154,15 +152,15 @@ class StorageManager {
 ```typescript
 class ContentLibraryProvider implements vscode.TreeDataProvider<LibraryItem> {
   // TreeDataProvider实现
-  getTreeItem(element: LibraryItem): vscode.TreeItem
-  getChildren(element?: LibraryItem): Thenable<LibraryItem[]>
+  getTreeItem(element: LibraryItem): vscode.TreeItem;
+  getChildren(element?: LibraryItem): Thenable<LibraryItem[]>;
 
   // 数据获取
-  private getCategories(): Promise<LibraryItem[]>
-  private getFilesInCategory(categoryPath: string): Promise<LibraryItem[]>
+  private getCategories(): Promise<LibraryItem[]>;
+  private getFilesInCategory(categoryPath: string): Promise<LibraryItem[]>;
 
   // 刷新
-  refresh(): void
+  refresh(): void;
 }
 ```
 
@@ -171,19 +169,19 @@ class ContentLibraryProvider implements vscode.TreeDataProvider<LibraryItem> {
 ```typescript
 class FileOperations {
   // 打开文件编辑
-  async openFile(filePath: string): Promise<void>
+  async openFile(filePath: string): Promise<void>;
 
   // 插入文件内容到当前编辑器
-  async insertFileContent(filePath: string): Promise<void>
+  async insertFileContent(filePath: string): Promise<void>;
 
   // 创建新文件
-  async createFile(category: string, filename: string): Promise<string>
+  async createFile(category: string, filename: string): Promise<string>;
 
   // 删除文件
-  async deleteFile(filePath: string): Promise<void>
+  async deleteFile(filePath: string): Promise<void>;
 
   // 重命名文件
-  async renameFile(oldPath: string, newName: string): Promise<string>
+  async renameFile(oldPath: string, newName: string): Promise<string>;
 }
 ```
 
@@ -192,19 +190,19 @@ class FileOperations {
 ```typescript
 class MetadataManager {
   // 加载元数据
-  async loadMetadata(): Promise<FileMetadata>
+  async loadMetadata(): Promise<FileMetadata>;
 
   // 保存元数据
-  async saveMetadata(metadata: FileMetadata): Promise<void>
+  async saveMetadata(metadata: FileMetadata): Promise<void>;
 
   // 更新文件元数据
-  async updateFileMetadata(filePath: string, content: string): Promise<void>
+  async updateFileMetadata(filePath: string, content: string): Promise<void>;
 
   // 记录文件使用
-  async recordFileUsage(filePath: string): Promise<void>
+  async recordFileUsage(filePath: string): Promise<void>;
 
   // 删除文件元数据
-  async removeFileMetadata(filePath: string): Promise<void>
+  async removeFileMetadata(filePath: string): Promise<void>;
 }
 ```
 
@@ -239,16 +237,16 @@ class MetadataManager {
 ```typescript
 class ConfigManager {
   // 加载配置
-  async loadConfig(): Promise<HubConfig>
+  async loadConfig(): Promise<HubConfig>;
 
   // 保存配置
-  async saveConfig(config: HubConfig): Promise<void>
+  async saveConfig(config: HubConfig): Promise<void>;
 
   // 获取默认配置
-  private getDefaultConfig(): HubConfig
+  private getDefaultConfig(): HubConfig;
 
   // 验证配置
-  private validateConfig(config: HubConfig): boolean
+  private validateConfig(config: HubConfig): boolean;
 }
 ```
 
@@ -271,11 +269,11 @@ const COMMANDS = {
   'aiRuleHub.searchFiles': '搜索文件',
 
   // 视图控制
-  'aiRuleHub.focusView': '聚焦到AI Rule Hub视图'
+  'aiRuleHub.focusView': '聚焦到AI Rule Hub视图',
 };
 ```
 
-______________________________________________________________________
+---
 
 ## 📱 用户交互细节
 
@@ -339,7 +337,7 @@ ______________________________________________________________________
 📄 restful-api.workflow.md
 ```
 
-______________________________________________________________________
+---
 
 ## 🔧 安装和配置
 
@@ -362,7 +360,7 @@ ______________________________________________________________________
 - 支持导入外部规则文件
 - 导出功能用于备份和分享
 
-______________________________________________________________________
+---
 
 ## 🚀 MVP功能范围
 
@@ -384,7 +382,7 @@ ______________________________________________________________________
 - ❌ 使用统计分析
 - ❌ 导入导出功能
 
-______________________________________________________________________
+---
 
 ## 📈 开发路线图
 
@@ -406,24 +404,21 @@ ______________________________________________________________________
 - 性能优化
 - 文档和测试
 
-______________________________________________________________________
+---
 
 ## 🐛 错误处理和边界情况
 
 ### 常见错误场景
 
 1. **存储路径不可访问**
-
    - 提示用户选择新路径
    - 提供修复指导
 
 1. **文件操作失败**
-
    - 显示具体错误信息
    - 提供重试选项
 
 1. **元数据损坏**
-
    - 自动重建元数据
    - 保留用户文件数据
 
@@ -433,7 +428,7 @@ ______________________________________________________________________
 - 进度指示器对于耗时操作
 - 详细的错误信息和解决建议
 
-______________________________________________________________________
+---
 
 ## 💡 设计决策说明
 
@@ -461,7 +456,7 @@ ______________________________________________________________________
 - 避免修改用户文件
 - 支持快速搜索和统计
 
-______________________________________________________________________
+---
 
 ## 🔮 未来扩展可能性
 
@@ -478,7 +473,7 @@ ______________________________________________________________________
 - 与其他AI编程工具集成
 - CI/CD流水线集成
 
-______________________________________________________________________
+---
 
 ## 📞 技术支持
 
@@ -494,10 +489,8 @@ ______________________________________________________________________
 - 常见问题解答
 - GitHub Issues支持
 
-______________________________________________________________________
+---
 
-**文档版本**: 1.0
-**最后更新**: 2024-01-20
-**维护者**: AI Rule Hub开发团队
+**文档版本**: 1.0 **最后更新**: 2024-01-20 **维护者**: AI Rule Hub开发团队
 
 这个设计文档提供了完整的开发参考，聚焦核心功能，避免过度设计，确保MVP能够快速交付并解决用户的核心痛点。

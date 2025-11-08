@@ -25,8 +25,14 @@ repos:
         language: system
         files: \.json$
 
-      - id: mdformat
-        name: Format Markdown (mdformat + GFM)
-        entry: python -m mdformat
+      - id: prettier
+        name: Prettier format
+        entry: npx prettier --write
         language: system
-        files: \.(md|markdown)$
+        files: \.(md|markdown|json|ya?ml|css|scss|html|js|ts|tsx)$
+
+      - id: eslint
+        name: ESLint fix
+        entry: npx eslint --fix
+        language: system
+        files: \.(js|ts|tsx)$

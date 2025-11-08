@@ -4,7 +4,8 @@
 
 ## 1. 总览
 
-AI Rule Hub 是一个 VS Code 扩展，用于统一管理 AI 编程规则与提示词，支持跨项目共享。核心由以下模块构成：
+AI Rule Hub 是一个 VS
+Code 扩展，用于统一管理 AI 编程规则与提示词，支持跨项目共享。核心由以下模块构成：
 
 - StorageManager：统一存储与文件系统操作
 - ConfigManager：扩展配置加载与校验
@@ -58,10 +59,13 @@ AI Rule Hub 是一个 VS Code 扩展，用于统一管理 AI 编程规则与提�
 type HubConfig = {
   version: string;
   storagePath: string;
-  categories: Record<string, {
-    enabled: boolean;
-    fileExtensions: string[];
-  }>;
+  categories: Record<
+    string,
+    {
+      enabled: boolean;
+      fileExtensions: string[];
+    }
+  >;
   features: {
     autoRefresh: boolean;
     showFileCounts: boolean;
