@@ -25,8 +25,8 @@ root/
 │   ├── rules.md             # 统一项目规则（本文件）
 │   └── architecture.md      # 项目架构说明
 ├── .editorconfig            # 编辑器统一风格
-└── .vscode/
-    └── settings.json        # VS Code 工作区配置
+└── .vscode/                 # 可选
+    └── settings.json        # 可选：VS Code 工作区配置
 ```
 
 扩展实现阶段建议：
@@ -82,7 +82,7 @@ Scope 建议：`storage`、`config`、`metadata`、`files`、`ui`、`commands`�
 
 ## 7. 分支策略（极简）
 
-- 主分支：`main`（稳定可发布）。
+- 主分支：`master`（或以仓库默认分支约定为准，稳定可发布）。
 - 特性分支：`feat/<short-name>`；修复分支：`fix/<short-name>`。
 - 小步快跑：PR 小而频、可快速回滚；禁止长期堆积。
 

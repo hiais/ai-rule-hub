@@ -56,7 +56,8 @@
     - 触发条件：`push` 标签 `v*`；支持 `workflow_dispatch` 手动触发
     - 步骤：Checkout → Setup Node 20 → `npm ci`（根与 `extension/`）→ `npm run build`（extension）→
       `npx vsce package --no-dependencies` → 上传 Artifact →（可选）创建 Open
-      VSX 命名空间 → 条件发布（检测到 Secrets 则发布 VSCE/OVSX）
+      VSX 命名空间 → 条件发布（检测到 Secrets 则发布 VSCE/OVSX）。发布步骤中会安装 `ovsx` 并动态解析
+      `extension/*.vsix` 的真实路径，避免路径不一致导致的 `ENOENT`。
 
 ## 5. 发布后验证
 
@@ -104,3 +105,4 @@
 - 根 `README.md`（仓库结构、快速索引、CI/CD 概览）
 - `extension/README.md`（扩展使用与维护者快速说明）
 - `/.github/workflows/release.yml`（自动发布工作流）
+- `docs/prompts.md`（一键快捷词最小集，快速执行与诊断）

@@ -6,11 +6,20 @@
 [![CI](https://github.com/hiais/ai-rule-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/hiais/ai-rule-hub/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
+## 快速入口
+
+复制以下短句到 Cursor/Trae 对话即可一键执行；详细说明见 `docs/prompts.md`。
+
+- `规范提交（git 记录)`
+- `本地打包并输出 VSIX 路径`
+- `CI 发布`
+
 ## 快速索引
 
 - 项目规则: `docs/rules.md`
 - 项目架构: `docs/architecture.md`
-- 工作区配置: `.editorconfig`, `.vscode/settings.json`
+- 快捷词（一键提效最小集）: `docs/prompts.md`
+- 工作区配置: `.editorconfig`
 
 ## 项目简介
 
@@ -37,7 +46,7 @@ Hub 旨在统一管理 AI 编程规则与提示词（规则、Prompts、MCP 配�
 
 - 初始化远程仓库并设置 `origin`：
   - 创建仓库：`https://github.com/<org>/ai-rule-hub`
-  - 将本地推送：`git remote add origin <repo-url>`，`git push -u origin main`
+  - 将本地推送：`git remote add origin <repo-url>`，`git push -u origin master`
 - 建议开启 `Actions`，使用本仓库的 CI 配置进行构建与发布。
 
 ## 扩展发布（VS Marketplace）
