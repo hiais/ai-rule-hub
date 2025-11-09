@@ -1,6 +1,10 @@
 # AI Rule Hub
 
-统一的项目规则与架构文档，确保持续开发的一致性与可维护性。
+统一管理 AI 编程规则与提示词的项目与 VS Code 扩展。
+
+[![GitHub Release](https://img.shields.io/github/v/release/hiais/ai-rule-hub?display_name=tag)](https://github.com/hiais/ai-rule-hub/releases)
+[![CI](https://github.com/hiais/ai-rule-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/hiais/ai-rule-hub/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 
 ## 快速索引
 
@@ -11,7 +15,7 @@
 ## 项目简介
 
 AI Rule
-Hub 旨在统一管理 AI 编程规则与提示词（ 规则、Prompts、MCP 配置、Agent 描述、工作流程），以极简、实用、零学习成本为核心设计理念，支持跨项目共享使用。
+Hub 旨在统一管理 AI 编程规则与提示词（规则、Prompts、MCP 配置、Agent 描述、工作流程），以极简、实用、零学习成本为核心设计理念，支持跨项目共享使用。
 
 ## 如何使用
 
@@ -21,6 +25,49 @@ Hub 旨在统一管理 AI 编程规则与提示词（ 规则、Prompts、MCP 配
 - 通过 `刷新文件库` 命令手动更新侧边栏数据；所有文件操作后会主动刷新列表。
 - 阅读并遵循 `docs/rules.md` 的统一规范与提交流程；参考 `docs/architecture.md`
   的模块职责与目录结构进行扩展。
+
+## 仓库结构
+
+- `extension/`：VS Code 扩展源码与发布文件
+- `docs/`：架构与统一规则文档
+- `preview/`：简单预览服务示例（与扩展无强耦合）
+- 根配置与工具：`eslint.config.js`、`.editorconfig`、`.prettierrc.json`
+
+## 推送到 GitHub
+
+- 初始化远程仓库并设置 `origin`：
+  - 创建仓库：`https://github.com/<org>/ai-rule-hub`
+  - 将本地推送：`git remote add origin <repo-url>`，`git push -u origin main`
+- 建议开启 `Actions`，使用本仓库的 CI 配置进行构建与发布。
+
+## 扩展发布（VS Marketplace）
+
+- 在 `extension/` 目录使用 `vsce` 打包与发布：
+  - 打包：`npx vsce package`
+  - 发布：`npx vsce publish -p <VSCE_TOKEN>`（需要已注册的发布者与令牌）
+- 发布清单：`extension/package.json` 已包含 `publisher`、`engines`、`icon`、`repository`、`keywords`
+  等主流字段。
+- 打包优化：通过 `extension/.vscodeignore` 排除开发文件，仅包含
+  `dist/`、`resources/`、`README.md`、`CHANGELOG.md`、`LICENSE`。
+
+## CI/CD 与自动发布
+
+- `/.github/workflows/ci.yml`：推送/PR 触发构建与 lint。
+- `/.github/workflows/release.yml`：推送 `v*` 标签自动打包；在设置 `VSCE_TOKEN` 后自动发布至市场。
+
+## 版本与变更记录
+
+- 遵循 [语义化版本](https://semver.org/lang/zh-CN/)；发布前更新 `CHANGELOG.md`。
+- 初始版本：`0.1.0`（MVP 骨架）。
+
+## 贡献与安全
+
+- 参阅 `CONTRIBUTING.md` 了解开发与提交规范。
+- 安全问题请按 `SECURITY.md` 指引通过私有渠道报告。
+
+## 许可证
+
+- 详见 `LICENSE`（MIT）。
 
 ## 持续交付建议
 

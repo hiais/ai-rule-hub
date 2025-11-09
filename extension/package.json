@@ -2,13 +2,31 @@
   "name": "ai-rule-hub",
   "displayName": "AI Rule Hub",
   "description": "统一管理 AI 编程规则与提示词的 VS Code 扩展（MVP 骨架）",
-  "version": "0.1.0",
-  "publisher": "hiai",
+  "version": "0.1.1",
+  "publisher": "hiais",
   "icon": "resources/icon-128.png",
   "private": true,
+  "license": "MIT",
+  "author": "hiais",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hiai/rule-kit.git"
+    "url": "https://github.com/hiais/ai-rule-hub.git"
+  },
+  "homepage": "https://github.com/hiais/ai-rule-hub#readme",
+  "bugs": {
+    "url": "https://github.com/hiais/ai-rule-hub/issues"
+  },
+  "keywords": [
+    "ai",
+    "rules",
+    "prompts",
+    "mcp",
+    "workflow",
+    "vscode-extension"
+  ],
+  "galleryBanner": {
+    "color": "#1f2937",
+    "theme": "dark"
   },
   "engines": {
     "vscode": "^1.85.0"

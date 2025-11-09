@@ -1,0 +1,23 @@
+# Exclude development-only files from VSCE package
+# Keep dist/, resources/, README.md, CHANGELOG.md, LICENSE
+
+.git/**
+.github/**
+.vscode/**
+node_modules/**
+
+# Source and build configs
+src/**
+scripts/**
+tsconfig.json
+eslint.config.js
+.eslintrc*
+.prettierignore
+.prettierrc*
+
+# Tests and coverage (if added later)
+test/**
+coverage/**
+
+# Misc
+*.log

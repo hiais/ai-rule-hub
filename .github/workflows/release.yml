@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  package-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+      OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies (root)
+        run: npm ci
+
+      - name: Install dependencies (extension)
+        run: npm ci
+        working-directory: extension
+
+      - name: Build (extension)
+        run: npm run build
+        working-directory: extension
+
+      - name: Package VSIX
+        run: npx vsce package --no-dependencies
+        working-directory: extension
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-rule-hub-vsix
+          path: extension/*.vsix
+
+      - name: Publish to VS Marketplace
+        if: env.VSCE_TOKEN != ''
+        run: npx vsce publish -p "$VSCE_TOKEN"
+        working-directory: extension
+
+      - name: Publish to Open VSX (optional)
+        if: env.OVSX_TOKEN != ''
+        run: |
+          npm i -g ovsx
+          ovsx publish extension/*.vsix -p "$OVSX_TOKEN"
