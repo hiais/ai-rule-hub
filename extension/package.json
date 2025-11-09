@@ -2,7 +2,7 @@
   "name": "ai-rule-hub",
   "displayName": "AI Rule Hub",
   "description": "统一管理 AI 编程规则与提示词的 VS Code 扩展（MVP 骨架）",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "hiais",
   "icon": "resources/icon-128.png",
   "private": true,
