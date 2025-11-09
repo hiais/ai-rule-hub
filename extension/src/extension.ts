@@ -6,6 +6,7 @@ import { ContentLibraryProvider } from './ui/ContentLibraryProvider';
 import { SearchViewProvider } from './ui/SearchViewProvider';
 import { registerCommands } from './commands/register';
 import { FileOperations } from './core/files/FileOperations';
+import { StarterInstaller } from './core/startup/StarterInstaller';
 
 export async function activate(context: vscode.ExtensionContext) {
   const configManager = new ConfigManager();
@@ -16,6 +17,10 @@ export async function activate(context: vscode.ExtensionContext) {
   // 依次初始化以避免并发竞态造成的目录缺失问题
   await storage.initialize(config);
   await metadata.initialize(config.storagePath);
+  // 从资源目录安装 starter：仅复制缺失文件，避免覆盖用户修改
+  try {
+    await new StarterInstaller().installFromResources(context, config, storage, metadata);
+  } catch {}
 
   const provider = new ContentLibraryProvider(config, storage, metadata);
   const tree = vscode.window.createTreeView('aiRuleHub.view', { treeDataProvider: provider });

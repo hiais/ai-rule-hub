@@ -11,6 +11,7 @@ coverage/
 # Env & logs
 .env*
 *.log
+.tmp/
 
 # OS / IDE
 .DS_Store
