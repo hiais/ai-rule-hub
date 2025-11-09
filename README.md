@@ -54,6 +54,7 @@ Hub 旨在统一管理 AI 编程规则与提示词（规则、Prompts、MCP 配�
 
 - `/.github/workflows/ci.yml`：推送/PR 触发构建与 lint。
 - `/.github/workflows/release.yml`：推送 `v*` 标签自动打包；在设置 `VSCE_TOKEN` 后自动发布至市场。
+- 发布与维护的完整步骤见 `docs/publishing.md`（包含 Git 推送、令牌权限配置、CI 触发与失败排查）。
 
 ## 版本与变更记录
 

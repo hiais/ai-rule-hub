@@ -50,6 +50,9 @@ npx vsce publish -p <VSCE_TOKEN>
 
 CI 发布：推送 `v*` 标签触发工作流，自动打包并在存在 `VSCE_TOKEN` 时发布。
 
+维护者请参阅仓库根目录 `docs/publishing.md`
+获取完整的发布与维护指南（包括 Git 推送、VSCE/OVSX 令牌获取与权限、CI 触发与常见故障排查）。
+
 ## Licenses
 
 请参考仓库根目录 `LICENSE`（MIT）。
