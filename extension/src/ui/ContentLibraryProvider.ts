@@ -16,6 +16,10 @@ export class ContentLibraryProvider implements vscode.TreeDataProvider<LibraryIt
     private metadata: MetadataManager,
   ) {}
 
+  // 延迟加载使用次数映射，避免阻塞首帧渲染
+  private usageCache?: Map<string, number>;
+  private usageLoaded = false;
+
   private filterQuery: string | undefined;
   private activeCategory: string | undefined;
   private sortMode:
@@ -65,13 +69,19 @@ export class ContentLibraryProvider implements vscode.TreeDataProvider<LibraryIt
       .filter(([, v]) => v.enabled)
       .map(([key]) => key);
     const lowerQuery = (this.filterQuery ?? '').toLowerCase();
+    const pairs = await Promise.all(
+      enabledCats.map(async (cat) => {
+        const files = await this.storage.listFiles(cat);
+        const count =
+          applyFilter && lowerQuery
+            ? files.filter((f) => `${cat}/${f}`.toLowerCase().includes(lowerQuery)).length
+            : files.length;
+        return [cat, count] as const;
+      }),
+    );
     const counts: Record<string, number> = {};
-    for (const cat of enabledCats) {
-      const files = await this.storage.listFiles(cat);
-      counts[cat] =
-        applyFilter && lowerQuery
-          ? files.filter((f) => `${cat}/${f}`.toLowerCase().includes(lowerQuery)).length
-          : files.length;
+    for (const [cat, cnt] of pairs) {
+      counts[cat] = cnt;
     }
     return counts;
   }
@@ -116,31 +126,33 @@ export class ContentLibraryProvider implements vscode.TreeDataProvider<LibraryIt
 
       const lowerQuery = (this.filterQuery ?? '').toLowerCase();
       const results: LibraryItem[] = [];
-      // 预先载入使用次数映射，以便在描述中展示
-      const meta = await this.metadata.loadMetadata().catch(() => ({ files: [] }));
-      const usageMap = new Map<string, number>();
-      meta.files.forEach((f) => usageMap.set(f.path, f.usedCount ?? 0));
+      // 使用次数改为延迟加载（首次渲染不阻塞）
+      const usageMap = this.usageCache;
 
-      for (const cat of targetCats) {
-        const files = await this.storage.listFiles(cat);
-        const filtered = lowerQuery
-          ? files.filter((f) => `${cat}/${f}`.toLowerCase().includes(lowerQuery))
-          : files;
-
-        for (const name of filtered) {
-          const abs = await this.storage.resolveFilePathFlexible(cat, name);
-          const useCnt = usageMap.get(abs) ?? 0;
-          results.push({
-            id: `${cat}/${name}`,
-            label: name,
-            type: 'file',
-            collapsible: false,
-            // 描述中仅显示使用次数数字；在“全部”视图也不显示分类
-            description: String(useCnt),
-            path: abs,
-          } as LibraryItem);
-        }
-      }
+      const catResults = await Promise.all(
+        targetCats.map(async (cat) => {
+          const files = await this.storage.listFiles(cat);
+          const filtered = lowerQuery
+            ? files.filter((f) => `${cat}/${f}`.toLowerCase().includes(lowerQuery))
+            : files;
+          const items = await Promise.all(
+            filtered.map(async (name) => {
+              const abs = await this.storage.resolveFilePathFlexible(cat, name);
+              const useCnt = usageMap ? (usageMap.get(abs) ?? 0) : undefined;
+              return {
+                id: `${cat}/${name}`,
+                label: name,
+                type: 'file',
+                collapsible: false,
+                description: useCnt != null ? String(useCnt) : undefined,
+                path: abs,
+              } as LibraryItem;
+            }),
+          );
+          return items;
+        }),
+      );
+      catResults.forEach((items) => results.push(...items));
       // 应用排序
       let sorted: LibraryItem[] = results;
       if (this.sortMode === 'mtimeAsc' || this.sortMode === 'mtimeDesc') {
@@ -163,16 +175,18 @@ export class ContentLibraryProvider implements vscode.TreeDataProvider<LibraryIt
           return this.sortMode === 'mtimeAsc' ? am - bm : bm - am;
         });
       } else if (this.sortMode === 'usageAsc' || this.sortMode === 'usageDesc') {
-        // 按使用频次排序：读取元数据 usedCount
-        const meta = await this.metadata.loadMetadata().catch(() => ({ files: [] }));
-        const usageMap = new Map<string, number>();
-        // 以绝对路径为键匹配 LibraryItem.path
-        meta.files.forEach((f) => usageMap.set(f.path, f.usedCount ?? 0));
-        sorted = results.sort((a, b) => {
-          const au = a.path ? (usageMap.get(a.path) ?? 0) : 0;
-          const bu = b.path ? (usageMap.get(b.path) ?? 0) : 0;
-          return this.sortMode === 'usageAsc' ? au - bu : bu - au;
-        });
+        // 使用频次排序：若尚未加载使用次数，则后台加载并使用名称排序兜底
+        if (!this.usageLoaded || !this.usageCache) {
+          this.ensureUsageLoaded();
+          sorted = results.sort((a, b) => a.label.localeCompare(b.label));
+        } else {
+          const map = this.usageCache;
+          sorted = results.sort((a, b) => {
+            const au = a.path ? (map.get(a.path) ?? 0) : 0;
+            const bu = b.path ? (map.get(b.path) ?? 0) : 0;
+            return this.sortMode === 'usageAsc' ? au - bu : bu - au;
+          });
+        }
       } else {
         sorted = results.sort((a, b) => {
           const [acat, aname] = a.id.split('/');
@@ -187,10 +201,29 @@ export class ContentLibraryProvider implements vscode.TreeDataProvider<LibraryIt
           }
         });
       }
+      // 首次渲染后后台加载使用次数并刷新（若尚未加载）
+      if (!this.usageLoaded || !this.usageCache) {
+        this.ensureUsageLoaded();
+      }
       return sorted;
     }
 
     // 不再返回分类子节点（因为根层即是文件列表）
     return [];
+  }
+
+  private async ensureUsageLoaded() {
+    if (this.usageLoaded && this.usageCache) return;
+    try {
+      const meta = await this.metadata.loadMetadata().catch(() => ({ files: [] }));
+      const map = new Map<string, number>();
+      meta.files.forEach((f) => map.set(f.path, f.usedCount ?? 0));
+      this.usageCache = map;
+      this.usageLoaded = true;
+      // 数据就绪后刷新一次列表，补全描述并应用可能的使用频次排序
+      this.refresh();
+    } catch {
+      this.usageLoaded = true;
+    }
   }
 }

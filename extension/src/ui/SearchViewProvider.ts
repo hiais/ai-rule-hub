@@ -4,6 +4,7 @@ import { ContentLibraryProvider } from './ContentLibraryProvider';
 export class SearchViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewId = 'aiRuleHub.search';
   private webviewView?: vscode.WebviewView;
+  private updateTimer: any;
   constructor(private libraryProvider: ContentLibraryProvider) {}
 
   resolveWebviewView(webviewView: vscode.WebviewView): void | Thenable<void> {
@@ -19,19 +20,44 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
       switch (msg.type) {
         case 'setFilter':
           this.libraryProvider.setFilter(msg.value ?? '');
-          this.updateSegments();
+          this.scheduleUpdateSegments();
           break;
         case 'setCategory':
           this.libraryProvider.setActiveCategory(msg.value ?? undefined);
-          this.updateSegments();
+          this.scheduleUpdateSegments();
           break;
         default:
           break;
       }
     });
 
-    // 初次加载时同步计数
-    this.updateSegments();
+    // 初次加载时同步计数（防抖触发）
+    this.scheduleUpdateSegments();
+
+    // 视图可见性变化：从其他视图切回时立即刷新计数
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        this.scheduleUpdateSegments();
+      }
+    });
+
+    // 订阅库数据变化：当树数据变更时同步分段计数
+    const changeDisposable = this.libraryProvider.onDidChangeTreeData(() => {
+      // 若视图不可见则跳过，避免不必要的消息传递
+      if (webviewView.visible) {
+        this.scheduleUpdateSegments();
+      }
+    });
+
+    // 视图销毁时清理订阅
+    webviewView.onDidDispose(() => {
+      try {
+        changeDisposable.dispose();
+        if (this.updateTimer) {
+          clearTimeout(this.updateTimer);
+        }
+      } catch {}
+    });
   }
 
   private getHtml(): string {
@@ -106,7 +132,11 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
 
       let categories = ['全部', ...DEFAULT_CATS];
       let counts = {};
-      let active = '全部';
+      // 读取持久化状态（分段与过滤）
+      const saved = (typeof vscode.getState === 'function' ? vscode.getState() : {}) || {};
+      let active = typeof saved.active === 'string' ? saved.active : '全部';
+      const savedFilter = typeof saved.filter === 'string' ? saved.filter : '';
+      if (q) q.value = savedFilter;
 
       function applyLayout() {
         const width = segs.offsetWidth || 200;
@@ -146,6 +176,10 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
             active = cat;
             renderSegments();
             vscode.postMessage({ type: 'setCategory', value: cat === '全部' ? undefined : cat });
+            // 记忆当前分段与过滤状态
+            if (typeof vscode.setState === 'function') {
+              vscode.setState({ active, filter: q.value || '' });
+            }
           };
           segs.appendChild(el);
         });
@@ -153,7 +187,10 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
         applyLayout();
       }
 
+      // 首次渲染并将持久化状态同步给扩展侧
       renderSegments();
+      vscode.postMessage({ type: 'setFilter', value: q.value || '' });
+      vscode.postMessage({ type: 'setCategory', value: active === '全部' ? undefined : active });
       window.addEventListener('resize', () => {
         applyLayout();
       });
@@ -161,11 +198,17 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
       q.addEventListener('input', (e) => {
         const val = e.target.value || '';
         vscode.postMessage({ type: 'setFilter', value: val });
+        if (typeof vscode.setState === 'function') {
+          vscode.setState({ active, filter: val });
+        }
         if (!val) {
           // 输入被清空时也重置分类为“全部”
           active = '全部';
           renderSegments();
           vscode.postMessage({ type: 'setCategory', value: undefined });
+          if (typeof vscode.setState === 'function') {
+            vscode.setState({ active, filter: '' });
+          }
         }
       });
 
@@ -178,6 +221,14 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
           // 根据启用的分类动态生成按钮集合，避免显示未启用分类导致计数缺失
           const keys = Object.keys(counts);
           categories = ['全部', ...DEFAULT_CATS.filter(cat => keys.includes(cat))];
+          // 若当前选择的分类已不可用，则回退到“全部”，并同步扩展与持久化状态
+          if (active !== '全部' && !keys.includes(active)) {
+            active = '全部';
+            vscode.postMessage({ type: 'setCategory', value: undefined });
+            if (typeof vscode.setState === 'function') {
+              vscode.setState({ active, filter: q.value || '' });
+            }
+          }
           renderSegments();
         }
       });
@@ -190,5 +241,12 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
     if (!this.webviewView) return;
     const counts = await this.libraryProvider.getCategoryCounts(true);
     this.webviewView.webview.postMessage({ type: 'updateSegments', counts });
+  }
+
+  private scheduleUpdateSegments() {
+    if (this.updateTimer) {
+      clearTimeout(this.updateTimer);
+    }
+    this.updateTimer = setTimeout(() => this.updateSegments(), 100);
   }
 }

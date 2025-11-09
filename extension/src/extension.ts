@@ -12,10 +12,8 @@ export async function activate(context: vscode.ExtensionContext) {
   const config = await configManager.loadConfig();
 
   const storage = new StorageManager();
-  await storage.initialize(config);
-
   const metadata = new MetadataManager();
-  await metadata.initialize(config.storagePath);
+  await Promise.all([storage.initialize(config), metadata.initialize(config.storagePath)]);
 
   const provider = new ContentLibraryProvider(config, storage, metadata);
   const tree = vscode.window.createTreeView('aiRuleHub.view', { treeDataProvider: provider });
