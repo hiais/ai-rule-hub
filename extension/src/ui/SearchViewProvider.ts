@@ -81,10 +81,21 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
       gap: 6px;
       margin-top: 8px;
       grid-auto-rows: min-content;
+      position: relative;
     }
     /* 最窄时强制保持两列 */
     .segments.two-cols {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    /* 刷新轻提示：右上角小字，不打扰 */
+    .segments.loading::after {
+      content: '刷新中…';
+      position: absolute;
+      right: 4px;
+      top: -14px;
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground, var(--vscode-foreground));
+      opacity: 0.6;
     }
     .seg {
       position: relative;
@@ -110,6 +121,10 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
       font-size: 11px;
       line-height: 16px;
     }
+    /* 占位徽章（未知计数）：稍微降低对比度 */
+    .seg .badge.placeholder {
+      opacity: 0.7;
+    }
     /* 始终使用自适应网格自动换行，不启用横向单行滚动 */
     /* 紧凑模式：隐藏冗余的括号计数（我们仅保留徽章） */
     .compact .seg .paren-count { display: none; }
@@ -132,11 +147,18 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
 
       let categories = ['全部', ...DEFAULT_CATS];
       let counts = {};
+      let isLoading = false;
       // 读取持久化状态（分段与过滤）
       const saved = (typeof vscode.getState === 'function' ? vscode.getState() : {}) || {};
       let active = typeof saved.active === 'string' ? saved.active : '全部';
       const savedFilter = typeof saved.filter === 'string' ? saved.filter : '';
       if (q) q.value = savedFilter;
+      // 若有上次计数，先用其初始化，避免 0→N 的视觉跳变
+      if (saved && typeof saved.counts === 'object' && saved.counts) {
+        counts = saved.counts;
+        const keys = Object.keys(counts);
+        categories = ['全部', ...DEFAULT_CATS.filter(cat => keys.includes(cat))];
+      }
 
       function applyLayout() {
         const width = segs.offsetWidth || 200;
@@ -147,46 +169,55 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
       }
 
       function renderSegments() {
+        // 先应用布局，以当前宽度确定是否紧凑模式，避免首次渲染出现 workflow→flow 跳变
+        applyLayout();
         segs.innerHTML = '';
         const compact = segs.classList.contains('compact');
 
         categories.forEach(cat => {
           const el = document.createElement('button');
           el.className = 'seg' + (active === cat ? ' active' : '');
-          const cnt = (cat === '全部')
+          const keys = Object.keys(counts);
+          const hasCounts = keys.length > 0;
+          const cntRaw = (cat === '全部')
             ? Object.values(counts).reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0)
-            : (counts[cat] ?? 0);
+            : counts[cat];
+          const isUnknown = !hasCounts || typeof cntRaw !== 'number';
+          const cnt = isUnknown ? undefined : cntRaw;
 
           // 文本：紧凑模式使用短标签，正常模式用完整标签
           const text = compact ? (LABELS_SHORT[cat] || cat) : cat;
           el.textContent = text;
 
           // 计数徽章：更省空间，替换 (12) 形式
-          if (typeof cnt === 'number') {
+          if (typeof cnt === 'number' || isUnknown) {
             const badge = document.createElement('span');
-            badge.className = 'badge';
-            badge.textContent = String(cnt);
+            badge.className = 'badge' + (isUnknown ? ' placeholder' : '');
+            badge.textContent = isUnknown ? '—' : String(cnt);
             el.appendChild(badge);
           }
 
           // 悬浮提示提供完整信息
-          el.title = cat + ' (' + cnt + ')';
+          el.title = cat + ' (' + (isUnknown ? '—' : cnt) + ')';
 
           el.onclick = () => {
             active = cat;
+            isLoading = true;
+            segs.classList.toggle('loading', isLoading);
             renderSegments();
             vscode.postMessage({ type: 'setCategory', value: cat === '全部' ? undefined : cat });
             // 记忆当前分段与过滤状态
             if (typeof vscode.setState === 'function') {
-              vscode.setState({ active, filter: q.value || '' });
+              vscode.setState({ active, filter: q.value || '', counts });
             }
           };
           segs.appendChild(el);
         });
-
-        applyLayout();
+        // 不在结尾重复布局应用，避免在同一渲染周期内触发两次模式切换
       }
 
+      // 首次渲染前应用一次布局，确保文本长度与紧凑模式一致
+      applyLayout();
       // 首次渲染并将持久化状态同步给扩展侧
       renderSegments();
       vscode.postMessage({ type: 'setFilter', value: q.value || '' });
@@ -197,9 +228,11 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
 
       q.addEventListener('input', (e) => {
         const val = e.target.value || '';
+        isLoading = true;
+        segs.classList.toggle('loading', isLoading);
         vscode.postMessage({ type: 'setFilter', value: val });
         if (typeof vscode.setState === 'function') {
-          vscode.setState({ active, filter: val });
+          vscode.setState({ active, filter: val, counts });
         }
         if (!val) {
           // 输入被清空时也重置分类为“全部”
@@ -207,7 +240,7 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
           renderSegments();
           vscode.postMessage({ type: 'setCategory', value: undefined });
           if (typeof vscode.setState === 'function') {
-            vscode.setState({ active, filter: '' });
+            vscode.setState({ active, filter: '', counts });
           }
         }
       });
@@ -218,6 +251,8 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
         if (!msg || typeof msg !== 'object') return;
         if (msg.type === 'updateSegments') {
           counts = msg.counts || {};
+          isLoading = false;
+          segs.classList.toggle('loading', isLoading);
           // 根据启用的分类动态生成按钮集合，避免显示未启用分类导致计数缺失
           const keys = Object.keys(counts);
           categories = ['全部', ...DEFAULT_CATS.filter(cat => keys.includes(cat))];
@@ -226,8 +261,12 @@ export class SearchViewProvider implements vscode.WebviewViewProvider {
             active = '全部';
             vscode.postMessage({ type: 'setCategory', value: undefined });
             if (typeof vscode.setState === 'function') {
-              vscode.setState({ active, filter: q.value || '' });
+              vscode.setState({ active, filter: q.value || '', counts });
             }
+          }
+          // 持久化最新计数，确保视图恢复时优先显示上次数据
+          if (typeof vscode.setState === 'function') {
+            vscode.setState({ active, filter: q.value || '', counts });
           }
           renderSegments();
         }
