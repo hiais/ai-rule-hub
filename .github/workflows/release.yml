@@ -37,9 +37,8 @@ jobs:
           rm -f extension/*.vsix || true
 
       - name: Resolve VSIX filename
-        run:
-          echo "VSIX_FILENAME=$(node -p \"const p=require('./extension/package.json');
-          `${p.publisher}.${p.name}-${p.version}.vsix`\")" >> $GITHUB_ENV
+        run: |
+          node -e 'const p=require("./extension/package.json"); const f = `${p.publisher}.${p.name}-${p.version}.vsix`; require("fs").appendFileSync(process.env.GITHUB_ENV, `VSIX_FILENAME=${f}\n`);'
 
       - name: Package VSIX
         run: npx vsce package --no-dependencies
@@ -52,7 +51,7 @@ jobs:
           path: extension/${{ env.VSIX_FILENAME }}
 
       - name: Ensure Open VSX namespace
-        if: env.OVSX_TOKEN != ''
+        if: always() && env.OVSX_TOKEN != ''
         run: |
           npm i -g ovsx
           PUBLISHER=$(node -p "require('./extension/package.json').publisher")
@@ -68,4 +67,5 @@ jobs:
       - name: Publish to Open VSX (optional)
         if: always() && env.OVSX_TOKEN != ''
         run: |
+          npm i -g ovsx
           ovsx publish "extension/${{ env.VSIX_FILENAME }}" -p "$OVSX_TOKEN"
