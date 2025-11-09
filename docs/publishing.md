@@ -45,15 +45,18 @@
   - 进入 `extension/`：`npm ci && npm run build`
   - 本地打包：`npx vsce package`
   - 发布到 VS Marketplace：`npx vsce publish -p <VSCE_TOKEN>`
-  - 发布到 Open VSX（可选）：`npm i -g ovsx && ovsx publish extension/*.vsix -p <OVSX_TOKEN>`
+  - 发布到 Open VSX（可选）：
+    - 首次需创建命名空间（Publisher 必须存在且与 `package.json` 的 `publisher` 一致）：
+      - 示例：`npx ovsx create-namespace hiais -p <OVSX_TOKEN>`（如你的 Publisher 为 `hiais`）
+    - 然后发布：`npm i -g ovsx && ovsx publish extension/*.vsix -p <OVSX_TOKEN>`
 
 - 通过 CI（推荐）：
   - 推送标签：`git push origin v0.1.1`
   - 工作流：`/.github/workflows/release.yml`
     - 触发条件：`push` 标签 `v*`；支持 `workflow_dispatch` 手动触发
     - 步骤：Checkout → Setup Node 20 → `npm ci`（根与 `extension/`）→ `npm run build`（extension）→
-      `npx vsce package --no-dependencies` → 上传 Artifact
-      → 条件发布（检测到 Secrets 则发布 VSCE/OVSX）
+      `npx vsce package --no-dependencies` → 上传 Artifact →（可选）创建 Open
+      VSX 命名空间 → 条件发布（检测到 Secrets 则发布 VSCE/OVSX）
 
 ## 5. 发布后验证
 
@@ -83,6 +86,9 @@
   - 运行 `npm ci` 确保依赖完整
   - 检查 `.vscodeignore` 是否误排除了必要文件（保留
     `dist/`、`resources/`、`README.md`、`CHANGELOG.md`、`LICENSE`）
+- Open VSX Unknown publisher：
+  - 确认 `extension/package.json` 的 `publisher` 与 Open VSX 命名空间一致（例如 `hiais`）
+  - 首次发布需执行：`npx ovsx create-namespace <publisher> -p <OVSX_TOKEN>`
 
 ## 7. 版本与文档维护
 

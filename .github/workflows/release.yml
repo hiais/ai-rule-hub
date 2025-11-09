@@ -42,6 +42,14 @@ jobs:
           name: ai-rule-hub-vsix
           path: extension/*.vsix
 
+      - name: Ensure Open VSX namespace
+        if: env.OVSX_TOKEN != ''
+        run: |
+          npm i -g ovsx
+          PUBLISHER=$(node -p "require('./extension/package.json').publisher")
+          echo "Publisher: $PUBLISHER"
+          ovsx create-namespace "$PUBLISHER" -p "$OVSX_TOKEN" || echo "Namespace exists or cannot be created; continuing"
+
       - name: Publish to VS Marketplace
         if: env.VSCE_TOKEN != ''
         run: npx vsce publish -p "$VSCE_TOKEN"
@@ -50,5 +58,4 @@ jobs:
       - name: Publish to Open VSX (optional)
         if: env.OVSX_TOKEN != ''
         run: |
-          npm i -g ovsx
           ovsx publish extension/*.vsix -p "$OVSX_TOKEN"
