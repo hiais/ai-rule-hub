@@ -7,6 +7,9 @@ export class MetadataManager {
 
   async initialize(basePath: string): Promise<void> {
     this.metaFile = path.join(basePath, 'metadata', 'file-meta.json');
+    // 确保元数据目录存在，避免并发初始化时出现 ENOENT
+    const metaDir = path.dirname(this.metaFile);
+    await fs.mkdir(metaDir, { recursive: true }).catch(() => {});
     try {
       await fs.access(this.metaFile);
     } catch {
