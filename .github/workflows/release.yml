@@ -36,19 +36,20 @@ jobs:
         run: |
           rm -f extension/*.vsix || true
 
-      - name: Resolve VSIX filename
-        run: |
-          node -e 'const p=require("./extension/package.json"); const f = `${p.publisher}.${p.name}-${p.version}.vsix`; require("fs").appendFileSync(process.env.GITHUB_ENV, `VSIX_FILENAME=${f}\n`);'
-
       - name: Package VSIX
         run: npx vsce package --no-dependencies
         working-directory: extension
+
+      - name: Resolve built VSIX filepath
+        run: |
+          echo "VSIX_FILEPATH=$(ls -1 extension/*.vsix | head -n 1)" >> $GITHUB_ENV
+          echo "Resolved VSIX_FILEPATH: $VSIX_FILEPATH"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ai-rule-hub-vsix
-          path: extension/${{ env.VSIX_FILENAME }}
+          path: ${{ env.VSIX_FILEPATH }}
 
       - name: Ensure Open VSX namespace
         if: always() && env.OVSX_TOKEN != ''
@@ -68,4 +69,5 @@ jobs:
         if: always() && env.OVSX_TOKEN != ''
         run: |
           npm i -g ovsx
-          ovsx publish "extension/${{ env.VSIX_FILENAME }}" -p "$OVSX_TOKEN"
+          echo "Publishing file: $VSIX_FILEPATH"
+          ovsx publish "$VSIX_FILEPATH" -p "$OVSX_TOKEN"
