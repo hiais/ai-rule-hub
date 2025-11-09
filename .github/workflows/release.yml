@@ -52,10 +52,11 @@ jobs:
 
       - name: Publish to VS Marketplace
         if: env.VSCE_TOKEN != ''
+        continue-on-error: true
         run: npx vsce publish -p "$VSCE_TOKEN"
         working-directory: extension
 
       - name: Publish to Open VSX (optional)
-        if: env.OVSX_TOKEN != ''
+        if: always() && env.OVSX_TOKEN != ''
         run: |
           ovsx publish extension/*.vsix -p "$OVSX_TOKEN"
